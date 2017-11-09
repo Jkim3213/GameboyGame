@@ -15,9 +15,9 @@ typedef unsigned int u32;
 #define RED COLOR(31,0,0)
 #define GREEN COLOR(0,31,0)
 #define BLUE COLOR(0,0,31)
-#define DRED COLOR(18, 0, 0)
-#define DGREEN COLOR(0, 18, 0)
-#define DBLUE COLOR(0, 0, 18)
+#define DRED COLOR(15, 0, 0)
+#define DGREEN COLOR(0, 15, 0)
+#define DBLUE COLOR(0, 0, 15)
 #define YELLOW COLOR(31, 31,0)
 #define WHITE COLOR(31, 31, 31)
 #define BGCOLOR COLOR(29, 29, 29)
@@ -103,20 +103,43 @@ typedef struct
 #define DMA_IRQ (1 << 30)
 #define DMA_ON (1 << 31)
 
+#define WOLF1(color, row, col) {1, color, 1, 1, row, col, 0}
 #define ADJPOS(pos, length) ((pos) - (length)/2)
 
-const int shpRow = 88;//describes center of sheep
-const int shpCol = 40;//describes center of sheep
-const int shpWidth = 20;
-const int shpHeight = 15;
+typedef struct WOLF
+{
+	unsigned int speed;
+	unsigned short color;
+	unsigned short health;//directly related to size
+	unsigned short spawnType;//0 - normal. 1 - rushed start. 2 - airborne
+	unsigned int row;
+	volatile unsigned int col;
+	unsigned short alive;//1 or 0
+
+} WOLF;
+
+typedef struct LASER
+{
+	unsigned short exists;
+	unsigned short color;
+	unsigned int row;
+	volatile unsigned int col;
+	unsigned int speed;
+} LASER;
+
+const unsigned int shpRow = 88;//describes center of sheep
+const unsigned int shpCol = 40;//describes center of sheep
+const unsigned int shpWidth = 20;
+const unsigned int shpHeight = 15;
 const unsigned int shpDeathCol = 50;//shpCol + shpWidth/2
-const int wlfRow = 88;
-const int wlfCol = 239;
-const int dwlfWidth = 20;
-const int dwlfHeight = 15;
-const int gFactor = 5; //growthfactor for wolves
+const unsigned int wlfRow = 88;
+const unsigned int wlfCol = 239;
+const unsigned int dwlfWidth = 25;
+const unsigned int dwlfHeight = 20;
+const unsigned int gFactor = 5; //growthfactor for wolves
 const unsigned int lCD = 30;//the constant value that laserCoolDown refreshes to
-const unsigned int laserSpeed = 19;
+const unsigned int laserSpeed = 10;
+const unsigned int laserLength = 10;
 int maxWolves;
 
 int shpAdjRow;
@@ -128,13 +151,14 @@ unsigned short *videoBuffer = (unsigned short *)0x6000000;
 extern unsigned short currentColor;//store color of sheep
 
 // Prototypes
+void populateWolves(WOLF wolves[], int size);
 void shootLaser();//Shoots current color and resets to black sheep
 void updateLaser();
 void updateSheep();//draws sheep
 void updateColor(int color);//updates color value
 void setPixel(int row, int col, unsigned short color);
 void drawRect(int row, int col, int height, int width, unsigned short color);
-void spawnWolf(int speed, short color, short health, short spawnType);
+//void spawnWolf(int speed, short color, short health, short spawnType);
 void createWolf();//actually creates the wolf
 void updateWolves();
 void delay(int n);
@@ -142,26 +166,7 @@ void waitForVblank();
 void drawChar(int row, int col, char ch, unsigned short color);
 void drawString(int row, int col, char str[], unsigned short color);
 
-typedef struct WOLF
-{
-	unsigned int speed;
-	unsigned short color;
-	unsigned short health;//directly related to size
-	unsigned short spawnType;//0 - normal. 1 - rushed start. 2 - airborne
-	unsigned int row;
-	unsigned int col;
-	unsigned short alive;//1 or 0
 
-} WOLF;
-
-typedef struct LASER
-{
-	unsigned short exists;
-	unsigned short color;
-	unsigned int row;
-	unsigned int col;
-	unsigned int speed;
-} LASER;
 
 
 

@@ -1,27 +1,35 @@
 #include <stdio.h>
 #include "Main.h"
-
+#define wsize 10
 unsigned short currentColor;
 
-
-WOLF wolves[3];
-int wlfCnter = 0;//wolf counter
+//const int size = 10;
+WOLF wolves[wsize];
+LASER lasers[2];
+//int wlfCnter = 0;//wolf counter
 int laserPos; 
-LASER laser;
+//LASER laser;
 int laserRow;
 int laserCol;
+unsigned int wRectRow;
+int score;
+int scoreMulti;
 
 int main()
 {
 	REG_DISPCTL = MODE3 | BG2_ENABLE;
 	shpAdjRow = ADJPOS(shpRow, shpHeight);
 	shpAdjCol = ADJPOS(shpCol, shpWidth);
-	maxWolves = 3;
+	//maxWolves = 3;
 	laserGirth = shpHeight/2;
 	laserRow = shpRow - laserGirth/2;
    	laserCol = shpCol + shpWidth/2;
-	
-	
+	wRectRow = ADJPOS(wlfRow, dwlfHeight);
+	score = 0;
+	scoreMulti = 0;
+
+	populateWolves(wolves, wsize);
+
 	//int score = 0;
 	//char buffer[41];
 	//sprintf(buffer, "Score: %d", score); //max score count
@@ -37,7 +45,7 @@ int main()
 	volatile unsigned int laserCooldown = 0;
 	
 	unsigned int wolfCooldown = 120;
-	const int wolfRate = 60;//8 wolves a sec
+	volatile const int wolfRate = 180;//8 wolves a sec
 
 	
 	while(1)
@@ -109,6 +117,18 @@ int main()
 
 }
 
+void populateWolves(WOLF wolves[], int size)
+{
+	
+	for(int i = 0; i < size; i++)
+	{
+		WOLF wolf = WOLF1(DBLUE, wRectRow, wlfCol);
+		wolves[i] = wolf;
+	}
+
+
+}
+
 void shootLaser()
 {
   
@@ -127,32 +147,42 @@ void shootLaser()
     //waitForVblank();
   }
 */
-  LASER temp = {1, currentColor, laserRow, laserCol, laserSpeed};
-  laser = temp;
+  LASER lead = {1, currentColor, laserRow, laserCol, laserSpeed};
+  LASER decay = {1, BGCOLOR, laserRow, laserCol, laserSpeed/2};
+  lasers[0] = lead;
+  lasers[1] = decay;
 }
 
 void updateLaser()
 {
 	//TODOx/
-	static volatile int laserTime = 120;
-	if(laser.exists && (laserTime == 0))
+	//static volatile int laserTime = 120;
+	
+
+	for(int i = 0; i < 2; i++)
 	{
-		laser.col = 0;
-		laser.exists = 0;
-		drawRect(laser.row, laserCol, laserGirth, 190, BGCOLOR);
-	}	
-	if(laser.exists)
-	{
-		//drawRect(laser.row, laser.col, laserGirth, laser.speed, BGCOLOR);
-		if(laserTime == 0)
-			laserTime = 180;
-		laser.col = laser.col + laser.speed;
-		if(laser.col + laser.speed < 240)
-			drawRect(laser.row, laser.col, laserGirth, laser.speed, laser.color);
-		
+		if(lasers[i].exists)
+		{
+			//drawRect(laser.row, laser.col, laserGirth, laser.speed, BGCOLOR);
+			//if(laserTime == 0)
+			//	laserTime = 180;
+			//drawRect(lasers[i].row, lasers[i].col, laserGirth, lasers[i].speed, BGCOLOR);
+			
+			if(lasers[i].col + lasers[i].speed <= 240)
+			{
+				drawRect(lasers[i].row, lasers[i].col, laserGirth, laserLength, lasers[i].color);
+			}
+			else
+			{
+				lasers[i].exists = 0;
+			}
+			lasers[i].col = lasers[i].col + lasers[i].speed;
+
+		}
 	}
-	if(laserTime > 0)
-		laserTime--;
+	//if(laserTime > 0)
+	//	laserTime--;
+
 
 }
 
@@ -164,38 +194,38 @@ void updateSheep()
 
 void updateColor(int x)
 {
-  switch(x){
+	switch(x){
 
-  case 0:
-    currentColor = BLACK;
-    break;
-  case 1:
-    currentColor = currentColor & ~RED;
-    currentColor = currentColor | RED;
-    break;
-  case 2:
-    currentColor = currentColor & ~GREEN;
-    currentColor = currentColor | GREEN;
-    break;
-  case 3:
-    currentColor = currentColor & ~BLUE;
-    currentColor = currentColor | BLUE;
-    break;
-  case 4:
-    currentColor = currentColor & ~RED;
-    currentColor = currentColor | DRED;
-    break;
-  case 5:
-    currentColor = currentColor & ~GREEN;
-    currentColor = currentColor | DGREEN;
-    break;
-  case 6:
-    currentColor = currentColor & ~BLUE;
-    currentColor = currentColor | DBLUE;
-    break;
-  
-    
-  }
+	 case 0:
+	   currentColor = BLACK;
+	   break;
+	 case 1:
+	   currentColor = currentColor & ~RED;
+	   currentColor = currentColor | RED;
+	   break;
+	 case 2:
+	   currentColor = currentColor & ~GREEN;
+	   currentColor = currentColor | GREEN;
+	   break;
+	 case 3:
+	   currentColor = currentColor & ~BLUE;
+	   currentColor = currentColor | BLUE;
+	   break;
+	 case 4:
+	   currentColor = currentColor & ~RED;
+	   currentColor = currentColor | DRED;
+	   break;
+	 case 5:
+	   currentColor = currentColor & ~GREEN;
+	   currentColor = currentColor | DGREEN;
+	   break;
+	 case 6:
+	   currentColor = currentColor & ~BLUE;
+	   currentColor = currentColor | DBLUE;
+	   break;
+	 
+	   
+	 }
 }
 
 void setPixel(int row, int col, unsigned short color)
@@ -227,34 +257,62 @@ void spawnWolf(int speed, short color, short health, short spawnType)
 */
 void createWolf()
 {
-	unsigned int wRectRow = ADJPOS(wlfRow, dwlfHeight);
+	//drawRect(0, 0, 15, 15, GREEN);
 	WOLF wolf = {1, RED, 5, 0, wRectRow, wlfCol, 1};
+	for(int i = 0; i < wsize; i++)
+	{
+		if(!wolves[i].alive)
+		{
+			wolves[i] = wolf;
+			break;
+		}
+
+	}
+	/*
 	if(wlfCnter < maxWolves){
 		wolves[wlfCnter] = wolf;
 		wlfCnter++;
 	}
-
+*/
 }
 
 void updateWolves()
 {
-	for(int i = 0; i < wlfCnter; i++)
+	for(int i = 0; i < wsize; i++)
 	{
+
 
 		if(wolves[i].alive)
 		{		
 			drawRect(wolves[i].row, wolves[i].col, dwlfHeight, dwlfWidth, BGCOLOR);
+			
+			if(lasers[0].color == wolves[i].color){
+				if(wolves[i].col > lasers[0].col && wolves[i].col < lasers[0].col + laserLength)//wolf intersecting laser
+				{
+					wolves[i].alive = 0;
+					scoreMulti++;
+					score += 100*scoreMulti;
+
+				}
+			}
 			wolves[i].col = wolves[i].col - wolves[i].speed;
 			if(wolves[i].col <= shpDeathCol)
 			{
 				wolves[i].alive = 0;
-				wlfCnter--;
+				//wlfCnter--;
 			
 			}
-			else
+			else if(wolves[i].alive)
 			{
 				drawRect(wolves[i].row, wolves[i].col, dwlfHeight, dwlfWidth, wolves[i].color);		
 			}
+
+			if(wolves[i].col >= wlfCol - dwlfWidth)//on spawn to get rid of overlap
+			{
+				//drawRect(0, 0, dwlfHeight, dwlfWidth, GREEN);
+				drawRect(wolves[i].row + 1, 0, dwlfHeight, dwlfWidth, BGCOLOR);
+			}
+			
 		}
 
 	}
