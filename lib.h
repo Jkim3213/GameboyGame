@@ -1,6 +1,7 @@
 #ifndef LIB_H_
 #define LIB_H_
 #include "marios/marios.h"
+#include <stdio.h>
 
 typedef unsigned int u32;
 typedef unsigned short u16;
@@ -28,32 +29,32 @@ typedef unsigned short u16;
 
 //if current color = MC000 draw image m000
 #define MC000 BLACK
-#define MC111 DRED | DGREEN | DBLUE
-#define MC222  RED |  GREEN | BLUE
-#define MC100 DRED |      0 |     0
-#define MC010    0 | DGREEN |     0
-#define MC001    0 |      0 | DBLUE
-#define MC200  RED |      0 |     0
-#define MC020    0 |  GREEN |     0
-#define MC002    0 |      0 |  BLUE
-#define MC110 DRED | DGREEN |     0
-#define MC101 DRED |      0 | DBLUE
-#define MC011    0 | DGREEN | DBLUE
-#define MC220  RED |  GREEN |     0
-#define MC202  RED |      0 |  BLUE
-#define MC022    0 |  GREEN |  BLUE
-#define MC210  RED | DGREEN |     0
-#define MC201  RED |      0 | DBLUE
-#define MC120 DRED |  GREEN |     0
-#define MC021    0 |  GREEN | DBLUE
-#define MC102 DRED |      0 |  BLUE
-#define MC012    0 | DGREEN |  BLUE
-#define MC211  RED | DGREEN | DBLUE
-#define MC121 DRED |  GREEN | DBLUE
-#define MC112 DRED | DGREEN |  BLUE
-#define MC221  RED |  GREEN | DBLUE
-#define MC212  RED | DGREEN |  BLUE
-#define MC122 DRED |  GREEN |  BLUE
+#define MC111 DRED | DGREEN | DBLUE//grey
+#define MC222  RED |  GREEN | BLUE //white
+#define MC100 DRED |      0 |     0//dark red
+#define MC010    0 | DGREEN |     0//dark green 
+#define MC001    0 |      0 | DBLUE//dark blue 
+#define MC200  RED |      0 |     0//red 
+#define MC020    0 |  GREEN |     0//green 
+#define MC002    0 |      0 |  BLUE//blue 
+#define MC110 DRED | DGREEN |     0//dark yellow
+#define MC101 DRED |      0 | DBLUE//dark magenta
+#define MC011    0 | DGREEN | DBLUE//dark cyan
+#define MC220  RED |  GREEN |     0//yellow
+#define MC202  RED |      0 |  BLUE//magenta
+#define MC022    0 |  GREEN |  BLUE//cyan
+#define MC210  RED | DGREEN |     0//orange
+#define MC201  RED |      0 | DBLUE//unused pink
+#define MC120 DRED |  GREEN |     0//unused lime
+#define MC021    0 |  GREEN | DBLUE//unused pastel green
+#define MC102 DRED |      0 |  BLUE//pastel purple
+#define MC012    0 | DGREEN |  BLUE//pastel blue
+#define MC211  RED | DGREEN | DBLUE//unused peach
+#define MC121 DRED |  GREEN | DBLUE//unused pale green
+#define MC112 DRED | DGREEN |  BLUE//pastel indigo
+#define MC221  RED |  GREEN | DBLUE//unused pastel yellow
+#define MC212  RED | DGREEN |  BLUE//pink
+#define MC122 DRED |  GREEN |  BLUE//unused pastel cyan
 
 
 
@@ -173,6 +174,7 @@ unsigned int dwlfWidth;
 unsigned int dwlfHeight;
 unsigned int gFactor; //growthfactor for wolves
 extern unsigned int lCD;//the constant value that laserCoolDown refreshes to
+extern unsigned int wolfRate;//8 wolves a sec
 unsigned int laserSpeed;
 unsigned int laserLength;
 int maxWolves;
@@ -183,7 +185,7 @@ int laserGirth;
 unsigned short currentColor;
 
 //const int size = 10;
-extern WOLF wolves[wsize];
+WOLF wolves[wsize];
 LASER lasers[2];
 //int wlfCnter = 0;//wolf counter
 int laserPos; 
@@ -194,9 +196,9 @@ unsigned int wRectRow;
 int score;
 int scoreMulti;
 const u16 *marioColor;
-extern int seed;
+extern unsigned int seed;
 
-
+extern int playerHealth;
 
 
 extern unsigned short *videoBuffer;
@@ -208,19 +210,23 @@ void populateWolves(WOLF wolves[], int size);
 void shootLaser();//Shoots current color and resets to black sheep
 void updateLaser();
 void updateSheep();//draws sheep
+void getMarioImage(unsigned short color, const u16 **marioColor);
 void updateColor(int color);//updates color value
-void setPixel(int row, int col, unsigned short color);
-void drawRect(int row, int col, int height, int width, unsigned short color);
+
 //void spawnWolf(int speed, short color, short health, short spawnType);
 void createWolf();//actually creates the wolf
 void updateWolves();
 void delay(int n);
 void waitForVblank();
+void setPixel(int row, int col, unsigned short color);
+void drawRect(int row, int col, int height, int width, unsigned short color);
 void drawChar(int row, int col, char ch, unsigned short color);
 void drawString(int row, int col, char str[], unsigned short color);
 void drawImage(int row, int col, int width, int height, const unsigned short* image);
+void drawImageFlippedLR(int row, int col, int width, int height, const u16* image);
+void fillScreen(volatile u16 color);
 void updatePipe();
-
-
+void updateScore();
+void gameOver();
 
 #endif

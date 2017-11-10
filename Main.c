@@ -1,13 +1,17 @@
-#include <stdio.h>
 #include "lib.h"
 
-int seed; 
-WOLF wolves[wsize];
-int LCD;
-unsigned short *videoBuffer;
+unsigned int seed; 
+
+unsigned int LCD;
+unsigned int wolfrate;
+int playerHealth;
 
 int main()
 {
+
+	volatile unsigned int laserCooldown = 0;
+	unsigned int wolfCooldown = 120;
+	
 	REG_DISPCTL = MODE3 | BG2_ENABLE;
 
 
@@ -19,28 +23,15 @@ int main()
 
 	init();
 
-	videoBuffer = (unsigned short *)0x6000000;
-
-	populateWolves(wolves, wsize);
-
-	//int score = 0;
-	//char buffer[41];
-	//sprintf(buffer, "Score: %d", score); //max score count
-	//drawString(150, 5, buffer, YELLOW);
-// Fill screen with bgcolor using DBA
-	int bgcolor = BGCOLOR;
-	REG_DMA3SAD = (u32)&bgcolor; // This is always an address!
-	REG_DMA3DAD = (u32)videoBuffer; // This is always an address!
-	REG_DMA3CNT = (240*160) | DMA_ON | DMA_DESTINATION_INCREMENT | DMA_SOURCE_FIXED;
+	fillScreen(BGCOLOR);
 	drawImage(112, 0, MFLOOR_WIDTH, MFLOOR_HEIGHT, mfloor);
 	
-	
+
 	updateColor(0);
 	updateSheep();
-	volatile unsigned int laserCooldown = 0;
+
+
 	
-	unsigned int wolfCooldown = 120;
-	volatile const int wolfRate = 180;//8 wolves a sec
 
 	
 	while(1)
@@ -99,12 +90,19 @@ int main()
 
 	    updateWolves();
 	    updateLaser();
+	    updateScore();
 	    updatePipe();
 	    if(laserCooldown)
 	    	laserCooldown--;
 
 	    if(wolfCooldown)
 	    	wolfCooldown--;
+
+	    if(playerHealth <= 0)
+	    {
+	    	gameOver();
+	    }
+
 
 	  	waitForVblank();
 	  
