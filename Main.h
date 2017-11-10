@@ -1,7 +1,9 @@
 #ifndef MAIN_H_
 #define MAIN_H_
+#include "marios.h"
 
 typedef unsigned int u32;
+typedef unsigned short u16;
 
 #define REG_DISPCTL *(unsigned short *)0x4000000
 #define MODE3 3
@@ -20,9 +22,39 @@ typedef unsigned int u32;
 #define DBLUE COLOR(0, 0, 15)
 #define YELLOW COLOR(31, 31,0)
 #define WHITE COLOR(31, 31, 31)
-#define BGCOLOR COLOR(29, 29, 29)
+#define BGCOLOR 0x7e4b
 #define OFFSET(r, c, rowlen) ((r)*(rowlen)+(c))
 #define BLACK 0
+
+//if current color = MC000 draw image m000
+#define MC000 BLACK
+#define MC111 DRED | DGREEN | DBLUE
+#define MC222  RED |  GREEN | BLUE
+#define MC100 DRED |      0 |     0
+#define MC010    0 | DGREEN |     0
+#define MC001    0 |      0 | DBLUE
+#define MC200  RED |      0 |     0
+#define MC020    0 |  GREEN |     0
+#define MC002    0 |      0 |  BLUE
+#define MC110 DRED | DGREEN |     0
+#define MC101 DRED |      0 | DBLUE
+#define MC011    0 | DGREEN | DBLUE
+#define MC220  RED |  GREEN |     0
+#define MC202  RED |      0 |  BLUE
+#define MC022    0 |  GREEN |  BLUE
+#define MC210  RED | DGREEN |     0
+#define MC201  RED |      0 | DBLUE
+#define MC120 DRED |  GREEN |     0
+#define MC021    0 |  GREEN | DBLUE
+#define MC102 DRED |      0 |  BLUE
+#define MC012    0 | DGREEN |  BLUE
+#define MC211  RED | DGREEN | DBLUE
+#define MC121 DRED |  GREEN | DBLUE
+#define MC112 DRED | DGREEN |  BLUE
+#define MC221  RED |  GREEN | DBLUE
+#define MC212  RED | DGREEN |  BLUE
+#define MC122 DRED |  GREEN |  BLUE
+
 
 
 extern const unsigned char fontdata_6x8[12288];
@@ -129,8 +161,8 @@ typedef struct LASER
 
 const unsigned int shpRow = 88;//describes center of sheep
 const unsigned int shpCol = 40;//describes center of sheep
-const unsigned int shpWidth = 20;
-const unsigned int shpHeight = 15;
+const unsigned int shpWidth = MARIO_WIDTH;
+const unsigned int shpHeight = MARIO_HEIGHT;
 const unsigned int shpDeathCol = 50;//shpCol + shpWidth/2
 const unsigned int wlfRow = 88;
 const unsigned int wlfCol = 239;
@@ -165,7 +197,7 @@ void delay(int n);
 void waitForVblank();
 void drawChar(int row, int col, char ch, unsigned short color);
 void drawString(int row, int col, char str[], unsigned short color);
-
+void drawImage(int row, int col, int width, int height, const unsigned short* image);
 
 
 

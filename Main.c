@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include "Main.h"
+
 #define wsize 10
 unsigned short currentColor;
 
@@ -14,6 +15,7 @@ int laserCol;
 unsigned int wRectRow;
 int score;
 int scoreMulti;
+const u16 *marioColor;
 
 int main()
 {
@@ -27,7 +29,7 @@ int main()
 	wRectRow = ADJPOS(wlfRow, dwlfHeight);
 	score = 0;
 	scoreMulti = 0;
-
+	marioColor = m000;
 	populateWolves(wolves, wsize);
 
 	//int score = 0;
@@ -40,6 +42,7 @@ int main()
 	REG_DMA3DAD = (u32)videoBuffer; // This is always an address!
 	REG_DMA3CNT = (240*160) | DMA_ON | DMA_DESTINATION_INCREMENT | DMA_SOURCE_FIXED;
 	//drawRect(shpRow - shpHeight/2, shpCol - shpWidth/2, shpHeight, shpWidth, BLACK);
+	
 	updateColor(0);
 	updateSheep();
 	volatile unsigned int laserCooldown = 0;
@@ -188,13 +191,102 @@ void updateLaser()
 
 void updateSheep()
 {
+	switch(currentColor)
+	{
+		case MC000:
+			marioColor = m000;
+			break;
+		case MC111:
+			marioColor = m111;
+			break;
+		case MC222:
+			marioColor = m222;
+			break;
+		case MC100:
+			marioColor = m100;
+			break;
+		case MC010:
+			marioColor = m010;
+			break;
+		case MC001:
+			marioColor = m001;
+			break;
+		case MC200:
+			marioColor = m200;
+			break;
+		case MC020:
+			marioColor = m020;
+			break;
+		case MC002:
+			marioColor = m002;
+			break;
+		case MC110:
+			marioColor = m110;
+			break;
+		case MC101:
+			marioColor = m101;
+			break;
+		case MC011:
+			marioColor = m011;
+			break;
+		case MC220:
+			marioColor = m220;
+			break;
+		case MC202:
+			marioColor = m202;
+			break;
+		case MC022:
+			marioColor = m022;
+			break;
+		case MC210:
+			marioColor = m210;
+			break;
+		case MC201:
+			marioColor = m201;
+			break;
+		case MC120:
+			marioColor = m120;
+			break;
+		case MC021:
+			marioColor = m021;
+			break;
+		case MC102:
+			marioColor = m102;
+			break;
+		case MC012:
+			marioColor = m012;
+			break;
+		case MC211:
+			marioColor = m211;
+			break;
+		case MC121:
+			marioColor = m121;
+			break;
+		case MC112:
+			marioColor = m112;
+			break;
+		case MC221:
+			marioColor = m221;
+			break;
+		case MC212:
+			marioColor = m212;
+			break;
+		case MC122:
+			marioColor = m122;
+			break;
+				
+	}
+	drawImage(shpAdjRow, shpAdjCol, MARIO_WIDTH, MARIO_HEIGHT, marioColor);
+	/*
   	drawRect(shpAdjRow - 1, shpAdjCol - 1, shpHeight + 2, shpWidth + 2, currentColor - currentColor/2);	
   	drawRect(shpAdjRow, shpAdjCol, shpHeight, shpWidth, currentColor);
+*/
 }
 
 void updateColor(int x)
 {
-	switch(x){
+	switch(x)
+	{
 
 	 case 0:
 	   currentColor = BLACK;
@@ -357,5 +449,15 @@ void drawString(int row, int col, char str[], unsigned short color)
 		drawChar(row, col, *str++, color);
 		col += 6;
 	}
+}
+
+void drawImage(int row, int col, int width, int height, const u16* image) 
+{
+    for (int r = 0; r < height; r++) {
+        DMA[3].src = &image[r*width];
+        DMA[3].dst = &videoBuffer[(row + r) * 240 + col];
+        DMA[3].cnt = width | DMA_ON;
+
+    }
 }
 
