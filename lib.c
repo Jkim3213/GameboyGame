@@ -82,7 +82,7 @@ void init()
 	//marioColor = m000;
 	playerHealth = 3;
 	populateWolves(wolves, wsize);
-
+	populateWolves(newWolves, wsize);
 
 	cloudRow = cloudRowOrigin;
 	cloudCol = cloudColOrigin;
