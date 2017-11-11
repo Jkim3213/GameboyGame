@@ -1,10 +1,12 @@
 /*
  * Exported with nin10kit v1.7
- * Invocation command was nin10kit --mode=3 marios m000.bmp m001.bmp m002.bmp m010.bmp m011.bmp m012.bmp m020.bmp m021.bmp m022.bmp m100.bmp m101.bmp m102.bmp m110.bmp m111.bmp m112.bmp m120.bmp m121.bmp m122.bmp m200.bmp m201.bmp m202.bmp m210.bmp m211.bmp m212.bmp m220.bmp m221.bmp m222.bmp mfloor.bmp pipe.bmp 
- * Time-stamp: Thursday 11/09/2017, 20:47:22
+ * Invocation command was nin10kit --mode=3 marios cloud.bmp GameOverScreen.bmp m000.bmp m001.bmp m002.bmp m010.bmp m011.bmp m012.bmp m020.bmp m021.bmp m022.bmp m100.bmp m101.bmp m102.bmp m110.bmp m111.bmp m112.bmp m120.bmp m121.bmp m122.bmp m200.bmp m201.bmp m202.bmp m210.bmp m211.bmp m212.bmp m220.bmp m221.bmp m222.bmp mfloor.bmp pipe.bmp StartScreen.bmp 
+ * Time-stamp: Friday 11/10/2017, 17:49:51
  * 
  * Image Information
  * -----------------
+ * cloud.bmp 40@24
+ * GameOverScreen.bmp 240@160
  * m000.bmp 24@32
  * m001.bmp 24@32
  * m002.bmp 24@32
@@ -34,12 +36,25 @@
  * m222.bmp 24@32
  * mfloor.bmp 240@48
  * pipe.bmp 16@32
+ * StartScreen.bmp 240@160
  * 
  * All bug reports / feature requests are to be filed here https://github.com/TricksterGuy/nin10kit/issues
  */
 
 #ifndef MARIOS_H
 #define MARIOS_H
+
+extern const unsigned short cloud[960];
+#define CLOUD_SIZE 1920
+#define CLOUD_LENGTH 960
+#define CLOUD_WIDTH 40
+#define CLOUD_HEIGHT 24
+
+extern const unsigned short GameOverScreen[38400];
+#define GAMEOVERSCREEN_SIZE 76800
+#define GAMEOVERSCREEN_LENGTH 38400
+#define GAMEOVERSCREEN_WIDTH 240
+#define GAMEOVERSCREEN_HEIGHT 160
 
 extern const unsigned short m000[768];
 #define M000_SIZE 1536
@@ -214,6 +229,12 @@ extern const unsigned short pipe[512];
 #define PIPE_LENGTH 512
 #define PIPE_WIDTH 16
 #define PIPE_HEIGHT 32
+
+extern const unsigned short StartScreen[38400];
+#define STARTSCREEN_SIZE 76800
+#define STARTSCREEN_LENGTH 38400
+#define STARTSCREEN_WIDTH 240
+#define STARTSCREEN_HEIGHT 160
 
 #endif
 

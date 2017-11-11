@@ -302,39 +302,80 @@ void updateColor(int x)
 void createWolf()
 {
 	//drawRect(0, 0, 15, 15, GREEN);
-	unsigned int colorSet1[7] = {RED, GREEN, BLUE, MC202, MC220, MC022, WHITE};
-	/*
-	u16 colorSet2[] = {RED, GREEN, BLUE, MAGENTA, YELLOW, CYAN, WHITE};
-	u16 colorSet3[] = {RED, GREEN, BLUE, MAGENTA, YELLOW, CYAN, WHITE};
-	u16 colorSet4[] = {RED, GREEN, BLUE, MAGENTA, YELLOW, CYAN, WHITE};
-	*/
-	//if(gameTime < 1)
+	unsigned short colorSet1[3]  = {MC200, MC020, MC002};
+
+	unsigned short colorSet2[6]  = {MC200, MC020, MC002, MC100, MC010, MC001};
+
+	unsigned short colorSet3[15] = {MC200, MC020, MC002, MC202, MC220, MC022, MC222, 
+									MC100, MC010, MC001, MC111, MC110, MC101, MC011, 
+									MC000};
+	
+	unsigned short colorSet4[16] = {MC200, MC020, MC002, MC202, MC220, MC022, MC222, 
+									MC100, MC010, MC001, MC111, MC110, MC101, MC011, 
+									MC000, MC210};
+	
+	unsigned short colorSet5[18] = {MC200, MC020, MC002, MC202, MC220, MC022, MC222, 
+									MC100, MC010, MC001, MC111, MC110, MC101, MC011, 
+									MC000, MC210, MC102, MC012};
+
+	unsigned short colorSet6[20] = {MC200, MC020, MC002, MC202, MC220, MC022, MC222, 
+									MC100, MC010, MC001, MC111, MC110, MC101, MC011, 
+									MC000, MC210, MC102, MC012, MC112, MC212};
+	unsigned short *ptrColorSet;
+	unsigned int speedPotential;
+	unsigned int setSize;
+	
+	if(gameTime < 10)
+	{
+		ptrColorSet = colorSet1;
+		setSize = 3;
+		speedPotential = 1;
+	}
+	else if(gameTime < 30)
+	{
+		ptrColorSet = colorSet2;
+		setSize = 6;
+		speedPotential = 1;
+	}
+	else if(gameTime < 60)
+	{
+		ptrColorSet = colorSet3;
+		setSize = 15;
+		speedPotential = 2;
+	}
+	else if(gameTime < 90)
+	{
+		ptrColorSet = colorSet4;
+		setSize = 16;
+		speedPotential = 2;
+	}
+	else if(gameTime < 120)
+	{
+		ptrColorSet = colorSet5;
+		setSize = 18;
+		speedPotential = 2;
+	}
+	else
+	{
+		ptrColorSet = colorSet6;
+		setSize = 20;
+		speedPotential = 3;
+	}
+
+
+
 	for(int i = 0; i < wsize; i++)
 	{
-		newWolves[i].speed = 1 + rand()%2;
-		newWolves[i].color = colorSet1[rand()%7];
+		newWolves[i].speed = 1 + rand()%speedPotential;
+		newWolves[i].color = ptrColorSet[rand()%setSize];
 		newWolves[i].row = wRectRow;
 		newWolves[i].col = wlfCol;
 		newWolves[i].alive = 1;
-	}
-	
-
+	}	
 
 	newCnter = 0;
 	spreadFactor = 10;
-	//WOLF wolf1 = {2, RED, 5, 0, wRectRow, wlfCol, 1};
-	/*
-	for(int i = 0; i < wsize; i++)
-	{
-		ptrWolf = wolves + i;
-		ptrNewWolf = newWolves +i;
-		if(!ptrWolf->alive)
-		{
-			*ptrWolf = *ptrNewWolf;
-		}
-
-	}
-*/
+	
 	
 
 }
@@ -348,22 +389,7 @@ void spawnWolf()
 			ptrWolf = wolves + i;
 			if(!ptrWolf->alive)
 				break;
-			/*
-			if(!ptrWolf->alive)
-			{
-				for(newCnter = newCnter; newCnter < wsize; newCnter++)
-				{
-					
-					ptrNewWolf = newWolves + newCnter;
-					if(!ptrWolf->alive)
-					{
-						*ptrWolf = *ptrNewWolf;
-						spreadFactor = 100;
-						break;
-					}
-				}
-			}
-			*/
+		
 		}
 		if(newCnter < 4)
 		{
@@ -392,6 +418,12 @@ void updateWolves()
 	const u16 **ptrMarioImage = &wolfColor;
 	if(spreadFactor > 0)
 		spreadFactor--;
+	for(int j = 0; j < wsize; j++)
+	{
+		ptrWolf = wolves + j;
+		if(ptrWolf->alive)
+			drawRect(ptrWolf->row, ptrWolf->col, MARIO_HEIGHT, MARIO_WIDTH, BGCOLOR);
+	}
 
 	for(int i = 0; i < wsize; i++)
 	{
@@ -400,10 +432,10 @@ void updateWolves()
 		if(ptrWolf->alive)
 		{	
 			getMarioImage(ptrWolf->color, ptrMarioImage);
-			drawRect(ptrWolf->row, ptrWolf->col, MARIO_HEIGHT, MARIO_WIDTH, BGCOLOR);
+			
 			
 			if(lasers[0].color == ptrWolf->color){
-				if(ptrWolf->col > lasers[1].col + laserLength && ptrWolf->col < lasers[0].col + laserLength)//wolf intersecting laser
+				if(ptrWolf->col > lasers[1].col && ptrWolf->col < lasers[0].col + laserLength)//wolf intersecting laser
 				{
 					ptrWolf->alive = 0;
 					int wolfPoints = 100*scoreMulti;
