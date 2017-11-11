@@ -2,6 +2,7 @@
 #define LIB_H_
 #include "marios/marios.h"
 #include <stdio.h>
+#include <stdlib.h>
 
 typedef unsigned int u32;
 typedef unsigned short u16;
@@ -136,9 +137,9 @@ typedef struct
 #define DMA_IRQ (1 << 30)
 #define DMA_ON (1 << 31)
 
-#define WOLF1(color, row, col) {1, color, 1, 1, row, col, 0}
+#define WOLF1(color, row, col) {1, color, row, col, 0}
 #define ADJPOS(pos, length) ((pos) - (length)/2)
-#define wsize 10
+#define wsize 4
 #define MARIO_WIDTH 24
 #define MARIO_HEIGHT 32
 
@@ -146,8 +147,8 @@ typedef struct WOLF
 {
 	unsigned int speed;
 	unsigned short color;
-	unsigned short health;//directly related to size
-	unsigned short spawnType;//0 - normal. 1 - rushed start. 2 - airborne
+	//unsigned short health;//directly related to size
+	//unsigned short spawnType;//0 - normal. 1 - rushed start. 2 - airborne
 	unsigned int row;
 	volatile unsigned int col;
 	unsigned short alive;//1 or 0
@@ -161,49 +162,20 @@ typedef struct LASER
 	unsigned int row;
 	volatile unsigned int col;
 	unsigned int speed;
+	unsigned int laserLength;
 } LASER;
 
-unsigned int shpRow;//describes center of sheep
-unsigned int shpCol;//describes center of sheep
-unsigned int shpWidth;
-unsigned int shpHeight;
-unsigned int shpDeathCol;//shpCol + shpWidth/2
-unsigned int wlfRow;
-unsigned int wlfCol;
-unsigned int dwlfWidth;
-unsigned int dwlfHeight;
-unsigned int gFactor; //growthfactor for wolves
 extern unsigned int lCD;//the constant value that laserCoolDown refreshes to
 extern unsigned int wolfRate;//8 wolves a sec
-unsigned int laserSpeed;
-unsigned int laserLength;
-int maxWolves;
 
-int shpAdjRow;
-int shpAdjCol;
-int laserGirth;
-unsigned short currentColor;
-
-//const int size = 10;
-WOLF wolves[wsize];
-LASER lasers[2];
-//int wlfCnter = 0;//wolf counter
-int laserPos; 
-//LASER laser;
-int laserRow;
-int laserCol;
-unsigned int wRectRow;
-int score;
-int scoreMulti;
-const u16 *marioColor;
 extern unsigned int seed;
 
 extern int playerHealth;
 
 
 extern unsigned short *videoBuffer;
-
-
+extern int gameState;
+extern unsigned int gameTime;
 // Prototypes
 void init();
 void populateWolves(WOLF wolves[], int size);
@@ -215,6 +187,7 @@ void updateColor(int color);//updates color value
 
 //void spawnWolf(int speed, short color, short health, short spawnType);
 void createWolf();//actually creates the wolf
+void drawPoints(unsigned int row, unsigned int col, unsigned short color, unsigned int points);
 void updateWolves();
 void delay(int n);
 void waitForVblank();
@@ -228,5 +201,9 @@ void fillScreen(volatile u16 color);
 void updatePipe();
 void updateScore();
 void gameOver();
+void updateCloud();
+void updateHealth();
+void spawnWolf();
+void startGame();
 
 #endif

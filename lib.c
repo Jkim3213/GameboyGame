@@ -15,10 +15,11 @@ unsigned int wolfRate;
 unsigned int laserSpeed;
 unsigned int laserLength;
 unsigned short currentColor;
+LASER lasers[2];
+const u16 *marioColor;
 
-
-int shpAdjRow;
-int shpAdjCol;
+unsigned int shpAdjRow;
+unsigned int shpAdjCol;
 int laserGirth;
 int laserRow;
 int laserCol;
@@ -29,6 +30,27 @@ unsigned int seed;
 unsigned short *videoBuffer;
 WOLF wolves[wsize];
 int playerHealth;
+WOLF newWolves[wsize];
+unsigned int redScore;
+unsigned int greenScore;
+unsigned int blueScore;
+int spreadFactor = 10;
+//cloud
+volatile unsigned int cloudRow;
+volatile unsigned int cloudCol;
+const unsigned int cloudRate = 100;
+static volatile unsigned int cloudCooldown;//1700 is initial push
+int cloudState;
+const unsigned int cloudRowOrigin = 20;
+const unsigned int cloudColOrigin = 240 - CLOUD_WIDTH - 20;
+unsigned int gameTime;
+unsigned int newCnter;
+
+WOLF *ptrWolf;
+WOLF *ptrNewWolf;
+LASER *ptrLaser;
+
+int gameState;
 
 void init()
 {
@@ -42,10 +64,10 @@ void init()
 	dwlfWidth = MARIO_WIDTH;
 	dwlfHeight = MARIO_HEIGHT;
 	gFactor = 5; //growthfactor for wolves
-	lCD = 30;//the constant value that laserCoolDown refreshes to
+	lCD = 15;//the constant value that laserCoolDown refreshes to
 	wolfRate = 180;
-	laserSpeed = 10;
-	laserLength = 10;
+	laserSpeed = 20;
+	laserLength = 20;
 
 	shpAdjRow = ADJPOS(shpRow, shpHeight);
 	shpAdjCol = ADJPOS(shpCol, shpWidth);
@@ -56,10 +78,31 @@ void init()
 	wRectRow = ADJPOS(wlfRow, dwlfHeight);
 	score = 0;
 	scoreMulti = 0;
-	videoBuffer = (unsigned short *)0x6000000;
+	
 	//marioColor = m000;
 	playerHealth = 3;
 	populateWolves(wolves, wsize);
+
+
+	cloudRow = cloudRowOrigin;
+	cloudCol = cloudColOrigin;
+	cloudCooldown = cloudRate;
+	cloudState = 0;
+
+	gameState = 2;
+	gameTime = 0;
+
+	fillScreen(BGCOLOR);
+	updateScore();
+	updateHealth();
+	drawImage(112, 0, MFLOOR_WIDTH, MFLOOR_HEIGHT, mfloor);
+	
+
+	updateColor(0);
+	updateSheep();
+	srand(seed);
+
+
 }
 
 void populateWolves(WOLF wolves[], int size)
@@ -67,7 +110,7 @@ void populateWolves(WOLF wolves[], int size)
 	
 	for(int i = 0; i < size; i++)
 	{
-		WOLF wolf = WOLF1(DBLUE, wRectRow, wlfCol);
+		WOLF wolf = {1, BLUE, wRectRow, wlfCol, 0};
 		wolves[i] = wolf;
 	}
 
@@ -77,10 +120,11 @@ void populateWolves(WOLF wolves[], int size)
 void shootLaser()
 {
   
-  LASER lead = {1, currentColor, laserRow, laserCol, laserSpeed};
-  LASER decay = {1, BGCOLOR, laserRow, laserCol, laserSpeed/2};
+  LASER lead = {1, currentColor, laserRow, laserCol, laserSpeed, laserLength};
+  LASER decay = {1, BGCOLOR, laserRow, laserCol, laserSpeed/4, laserLength/4};
   lasers[0] = lead;
   lasers[1] = decay;
+  scoreMulti = 1;
 }
 
 void updateLaser()
@@ -88,19 +132,21 @@ void updateLaser()
 
 	for(int i = 0; i < 2; i++)
 	{
-		if(lasers[i].exists)
+		ptrLaser = lasers + i;
+		if(ptrLaser->exists)
 		{
 			
-			if(lasers[i].col + lasers[i].speed <= 240)
+			if(ptrLaser->col + ptrLaser->speed <= 240)
 			{
-				drawRect(lasers[i].row, lasers[i].col, laserGirth, laserLength, lasers[i].color);
+				drawRect(ptrLaser->row, ptrLaser->col, laserGirth, ptrLaser->laserLength, ptrLaser->color);
 			}
 			else
 			{
-				lasers[i].exists = 0;
-				drawRect(4, 120, 8, 120, BGCOLOR);//Clears score block to be written over
+				ptrLaser->exists = 0;
+				
+				updateScore();
 			}
-			lasers[i].col = lasers[i].col + lasers[i].speed;
+			ptrLaser->col = ptrLaser->col + ptrLaser->speed;
 
 		}
 	}
@@ -244,8 +290,8 @@ void updateColor(int x)
 {
 	unsigned int speed;
 	unsigned short color;
-	unsigned short health;//directly related to size
-	unsigned short spawnType;//0 - normal. 1 - rushed start. 2 - airborne
+	//unsigned short health;//directly related to size
+	//unsigned short spawnType;//0 - normal. 1 - rushed start. 2 - airborne
 	unsigned int row;
 	volatile unsigned int col;
 	unsigned short alive;//1 or 0
@@ -256,69 +302,141 @@ void updateColor(int x)
 void createWolf()
 {
 	//drawRect(0, 0, 15, 15, GREEN);
-	WOLF wolf1 = {1, RED, 5, 0, wRectRow, wlfCol, 1};
-	for(int i = 0; i < wsize/2; i++)
+	unsigned int colorSet1[7] = {RED, GREEN, BLUE, MC202, MC220, MC022, WHITE};
+	/*
+	u16 colorSet2[] = {RED, GREEN, BLUE, MAGENTA, YELLOW, CYAN, WHITE};
+	u16 colorSet3[] = {RED, GREEN, BLUE, MAGENTA, YELLOW, CYAN, WHITE};
+	u16 colorSet4[] = {RED, GREEN, BLUE, MAGENTA, YELLOW, CYAN, WHITE};
+	*/
+	//if(gameTime < 1)
+	for(int i = 0; i < wsize; i++)
 	{
-		if(!wolves[i].alive)
+		newWolves[i].speed = 1 + rand()%2;
+		newWolves[i].color = colorSet1[rand()%7];
+		newWolves[i].row = wRectRow;
+		newWolves[i].col = wlfCol;
+		newWolves[i].alive = 1;
+	}
+	
+
+
+	newCnter = 0;
+	spreadFactor = 10;
+	//WOLF wolf1 = {2, RED, 5, 0, wRectRow, wlfCol, 1};
+	/*
+	for(int i = 0; i < wsize; i++)
+	{
+		ptrWolf = wolves + i;
+		ptrNewWolf = newWolves +i;
+		if(!ptrWolf->alive)
 		{
-			wolves[i] = wolf1;
-			break;
+			*ptrWolf = *ptrNewWolf;
 		}
 
 	}
-	WOLF wolf2 = {2, YELLOW, 5, 0, wRectRow, wlfCol, 1};
-	for(int i = wsize/2; i < wsize; i++)
+*/
+	
+
+}
+
+void spawnWolf()
+{
+	if(spreadFactor == 0)
 	{
-		if(!wolves[i].alive)
+		for(int i = 0; i < wsize; i++)
 		{
-			wolves[i] = wolf2;
-			break;
+			ptrWolf = wolves + i;
+			if(!ptrWolf->alive)
+				break;
+			/*
+			if(!ptrWolf->alive)
+			{
+				for(newCnter = newCnter; newCnter < wsize; newCnter++)
+				{
+					
+					ptrNewWolf = newWolves + newCnter;
+					if(!ptrWolf->alive)
+					{
+						*ptrWolf = *ptrNewWolf;
+						spreadFactor = 100;
+						break;
+					}
+				}
+			}
+			*/
 		}
-
+		if(newCnter < 4)
+		{
+		*ptrWolf = *(newWolves + newCnter);
+		newCnter++;
+		spreadFactor = 10;
+		}
 	}
+}
 
+void drawPoints(unsigned int row ,unsigned int col, unsigned short color, unsigned int points)
+{
+	
+	char buffer[41];
+	sprintf(buffer, "%d", points);
+	
+	drawString(row - 8, col, buffer, color);
+
+	delay(7);
+	drawRect(row - 8, col, 8, 20, BGCOLOR);//Clears score block to be written over
 }
 
 void updateWolves()
 {
 	const u16 *wolfColor;;
 	const u16 **ptrMarioImage = &wolfColor;
+	if(spreadFactor > 0)
+		spreadFactor--;
 
 	for(int i = 0; i < wsize; i++)
 	{
+		ptrWolf = wolves + i;
 
-
-		if(wolves[i].alive)
+		if(ptrWolf->alive)
 		{	
-			getMarioImage(wolves[i].color, ptrMarioImage);
-			drawRect(wolves[i].row, wolves[i].col, MARIO_HEIGHT, MARIO_WIDTH, BGCOLOR);
+			getMarioImage(ptrWolf->color, ptrMarioImage);
+			drawRect(ptrWolf->row, ptrWolf->col, MARIO_HEIGHT, MARIO_WIDTH, BGCOLOR);
 			
-			if(lasers[0].color == wolves[i].color){
-				if(wolves[i].col > lasers[0].col && wolves[i].col < lasers[0].col + laserLength)//wolf intersecting laser
+			if(lasers[0].color == ptrWolf->color){
+				if(ptrWolf->col > lasers[1].col + laserLength && ptrWolf->col < lasers[0].col + laserLength)//wolf intersecting laser
 				{
-					wolves[i].alive = 0;
-					scoreMulti++;
-					score += 100*scoreMulti;
+					ptrWolf->alive = 0;
+					int wolfPoints = 100*scoreMulti;
+					score += wolfPoints;
+					scoreMulti *= 2;
+					drawPoints(ptrWolf->row, ptrWolf->col, ptrWolf->color, wolfPoints);
 
 				}
 			}
-			wolves[i].col = wolves[i].col - wolves[i].speed;
-			if(wolves[i].col <= shpDeathCol)
+			ptrWolf->col = ptrWolf->col - ptrWolf->speed;
+			if(ptrWolf->col <= shpDeathCol)
 			{
-				wolves[i].alive = 0;
+				ptrWolf->alive = 0;
 				playerHealth--;
+				if(playerHealth == 0)
+				{
+					redScore = ptrWolf->color & RED;
+					greenScore = ptrWolf->color & BLUE;
+					blueScore = ptrWolf->color & GREEN;
+				}
+				updateHealth();
 			
 			}
-			else if(wolves[i].alive)
+			else if(ptrWolf->alive)
 			{
 				//drawRect(wolves[i].row, wolves[i].col, dwlfHeight, dwlfWidth, wolves[i].color);		
-				drawImageFlippedLR(wolves[i].row, wolves[i].col, MARIO_WIDTH, MARIO_HEIGHT, wolfColor);
+				drawImageFlippedLR(ptrWolf->row, ptrWolf->col, MARIO_WIDTH, MARIO_HEIGHT, wolfColor);
 			}
 
-			if(wolves[i].col >= wlfCol - dwlfWidth)//on spawn to get rid of overlap
+			if(ptrWolf->col >= wlfCol - dwlfWidth)//on spawn to get rid of overlap
 			{
 				//drawRect(0, 0, dwlfHeight, dwlfWidth, GREEN);
-				drawRect(wolves[i].row + 1, 0, dwlfHeight, dwlfWidth, BGCOLOR);
+				drawRect(ptrWolf->row + 1, 0, dwlfHeight, dwlfWidth, BGCOLOR);
 
 			}
 			
@@ -341,7 +459,7 @@ void delay(int n)
 void waitForVblank()
 {
 	while(SCANLINECOUNTER > 160);
-	while(SCANLINECOUNTER < 160);
+	while(SCANLINECOUNTER < 161);
 }
 
 void setPixel(int row, int col, unsigned short color)
@@ -407,7 +525,7 @@ void fillScreen(volatile u16 color)
 	DMA[3].src = &color;
 	DMA[3].dst = videoBuffer;
 	DMA[3].cnt = (160*240) | DMA_ON | DMA_DESTINATION_INCREMENT | DMA_SOURCE_FIXED;
-
+	drawImage(cloudRow, cloudCol, CLOUD_WIDTH, CLOUD_HEIGHT, cloud);
 }
 
 
@@ -418,28 +536,116 @@ void updatePipe()
 
 void updateScore()
 {
+	drawRect(3, 120, 9, 120, BGCOLOR);//Clears score block to be written over
 	char buffer[41];
 	sprintf(buffer, "Score: %d", score);
+	drawString(4, 131, buffer, BLACK);
+	drawString(3, 130, buffer, WHITE);
 	
-	drawString(4, 120, buffer, WHITE);
+}
 
+void updateHealth()
+{
+	drawRect(4, 19, 9, 60, BGCOLOR);//Clears score block to be written over
+	char buffer[41];
+	sprintf(buffer, "Health: %d", playerHealth);
+	drawString(5, 20, buffer, BLACK);
+	drawString(4, 19, buffer, WHITE);
 }
 
 void gameOver()
 {
-	fillScreen(WHITE);
+	delay(4);
+	drawImage(0, 0, 240, 160, GameOverScreen);
+	char buffer[41];
+	sprintf(buffer, "Final Score: %d", score);
+	drawString(124, 84, buffer, blueScore);
+	drawString(122, 82, buffer, greenScore);
+	drawString(120, 80, buffer, redScore);
+
+	char time[41];
+	sprintf(time, "  Game Time: %d", gameTime);
+	drawString(140, 80, time, WHITE);
+
+
 	while(1)
 	{
 		if(KEY_DOWN_NOW(BUTTON_START))
 		{
 
-			fillScreen(BGCOLOR);
-			drawImage(112, 0, MFLOOR_WIDTH, MFLOOR_HEIGHT, mfloor);
-			updateSheep();	
-			init();
+			gameState = 0;
 			break;
-
 		}
 
 	}
+}
+
+void updateCloud()
+{
+	
+	if(cloudCooldown > 0)
+		cloudCooldown--;
+	
+	const int cloudSpeed = 1;
+	volatile int oldcloudRow = cloudRow;
+	volatile int oldcloudCol = cloudCol;
+	u32 tempRowOrigin = cloudRowOrigin;
+	u32 tempColOrigin = cloudColOrigin;
+
+	if(cloudCooldown == 0)
+	{
+		//drawRect(cloudRow, cloudCol, CLOUD_HEIGHT, CLOUD_WIDTH, BGCOLOR);
+		
+		switch(cloudState){
+			case(0):
+				cloudRow = cloudRow + cloudSpeed;//down
+				//drawImage(0, 0, MARIO_WIDTH, MARIO_HEIGHT, m121);
+				if(cloudRow == shpAdjRow)
+					cloudState = 1;
+				break;
+			case(1):
+				cloudCol -= cloudSpeed;//left
+				//drawImage(5, 5, MARIO_WIDTH, MARIO_HEIGHT, m220);
+				if(cloudCol == shpAdjCol + MARIO_WIDTH + 2)
+					cloudState = 2;
+				break;
+			case(2):
+				cloudRow -= cloudSpeed;//up
+				if(cloudRow == tempRowOrigin)
+					cloudState = 3;
+				break;
+			case(3):
+				cloudCol += cloudSpeed;//right
+				if(cloudCol == tempColOrigin)
+					cloudState = 4;
+				break;
+			default:
+				cloudCooldown = cloudRate * 10;//cloudRate;//stationary
+				cloudState = 0;
+
+				break;
+		}
+		drawRect(oldcloudRow, oldcloudCol, CLOUD_HEIGHT, CLOUD_WIDTH, BGCOLOR);
+		drawImage(cloudRow, cloudCol, CLOUD_WIDTH, CLOUD_HEIGHT, cloud);
+
+
+	}
+
+}
+
+void startGame()
+{
+	videoBuffer = (unsigned short *)0x6000000;
+
+	drawImage(0, 0, STARTSCREEN_WIDTH, STARTSCREEN_HEIGHT, StartScreen);
+	delay(10);	
+	while(!KEY_DOWN_NOW(BUTTON_START))
+	{
+		seed++;
+
+	}
+	init();
+	
+
+
 }
