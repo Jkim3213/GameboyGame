@@ -96,7 +96,7 @@ void init()
 	updateScore();
 	updateHealth();
 	drawImage(112, 0, MFLOOR_WIDTH, MFLOOR_HEIGHT, mfloor);
-	
+	clearLaser();
 
 	updateColor(0);
 	updateSheep();
@@ -115,6 +115,11 @@ void populateWolves(WOLF wolves[], int size)
 	}
 
 
+}
+
+void clearLaser()
+{
+	drawRect(laserRow, laserCol, laserGirth, 240 - laserCol, BGCOLOR);
 }
 
 void shootLaser()
@@ -400,24 +405,44 @@ void spawnWolf()
 	}
 }
 
-void drawPoints(unsigned int row ,unsigned int col, unsigned short color, unsigned int points)
+void drawPoints(unsigned int row ,unsigned int col, unsigned short color, unsigned int points, const u16 *wolfColor)
 {
 	
 	char buffer[41];
 	sprintf(buffer, "%d", points);
 	
 	drawString(row - 8, col, buffer, color);
-
+	drawImageFlippedLR(row, col, MARIO_WIDTH, MARIO_HEIGHT, wolfColor);
+	
 	delay(7);
 	drawRect(row - 8, col, 8, 20, BGCOLOR);//Clears score block to be written over
+	drawRect(row, col - 1, MARIO_HEIGHT, MARIO_WIDTH, BGCOLOR);
 }
 
 void updateWolves()
 {
-	const u16 *wolfColor;;
+	const u16 *wolfColor;
 	const u16 **ptrMarioImage = &wolfColor;
 	if(spreadFactor > 0)
 		spreadFactor--;
+	for(int k = 0; k < wsize; k++)
+	{
+		ptrWolf = wolves + k;
+		
+		if(lasers[0].color == ptrWolf->color){
+				if(ptrWolf->col > lasers[1].col && ptrWolf->col < lasers[0].col + laserLength && ptrWolf->alive == 1)//wolf intersecting laser
+				{
+					getMarioImage(ptrWolf->color, ptrMarioImage);
+					ptrWolf->alive = 0;
+					int wolfPoints = 100*scoreMulti;
+					score += wolfPoints;
+					scoreMulti *= 2;
+					drawPoints(ptrWolf->row, ptrWolf->col, ptrWolf->color, wolfPoints, wolfColor);
+
+
+				}
+			}
+	}
 	for(int j = 0; j < wsize; j++)
 	{
 		ptrWolf = wolves + j;
@@ -434,17 +459,7 @@ void updateWolves()
 			getMarioImage(ptrWolf->color, ptrMarioImage);
 			
 			
-			if(lasers[0].color == ptrWolf->color){
-				if(ptrWolf->col > lasers[1].col && ptrWolf->col < lasers[0].col + laserLength)//wolf intersecting laser
-				{
-					ptrWolf->alive = 0;
-					int wolfPoints = 100*scoreMulti;
-					score += wolfPoints;
-					scoreMulti *= 2;
-					drawPoints(ptrWolf->row, ptrWolf->col, ptrWolf->color, wolfPoints);
-
-				}
-			}
+			
 			ptrWolf->col = ptrWolf->col - ptrWolf->speed;
 			if(ptrWolf->col <= shpDeathCol)
 			{
@@ -464,8 +479,9 @@ void updateWolves()
 				//drawRect(wolves[i].row, wolves[i].col, dwlfHeight, dwlfWidth, wolves[i].color);		
 				drawImageFlippedLR(ptrWolf->row, ptrWolf->col, MARIO_WIDTH, MARIO_HEIGHT, wolfColor);
 			}
+			
 
-			if(ptrWolf->col >= wlfCol - dwlfWidth)//on spawn to get rid of overlap
+			if(ptrWolf->col >= wlfCol - dwlfWidth)//on spawn to get rid of wrapping
 			{
 				//drawRect(0, 0, dwlfHeight, dwlfWidth, GREEN);
 				drawRect(ptrWolf->row + 1, 0, dwlfHeight, dwlfWidth, BGCOLOR);
@@ -591,9 +607,10 @@ void gameOver()
 	drawImage(0, 0, 240, 160, GameOverScreen);
 	char buffer[41];
 	sprintf(buffer, "Final Score: %d", score);
-	drawString(124, 84, buffer, blueScore);
+	drawString(123, 83, buffer, blueScore);
 	drawString(122, 82, buffer, greenScore);
-	drawString(120, 80, buffer, redScore);
+	drawString(121, 81, buffer, redScore);
+	drawString(120, 80, buffer, WHITE);
 
 	char time[41];
 	sprintf(time, "  Game Time: %d", gameTime);

@@ -187,7 +187,8 @@ void updateColor(int color);//updates color value
 
 //void spawnWolf(int speed, short color, short health, short spawnType);
 void createWolf();//actually creates the wolf
-void drawPoints(unsigned int row, unsigned int col, unsigned short color, unsigned int points);
+void drawPoints(unsigned int row, unsigned int col, 
+				unsigned short color, unsigned int points, const u16 *wolfColor);
 void updateWolves();
 void delay(int n);
 void waitForVblank();
@@ -205,5 +206,5 @@ void updateCloud();
 void updateHealth();
 void spawnWolf();
 void startGame();
-
+void clearLaser();
 #endif
